@@ -5594,19 +5594,27 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		} else if ( texture instanceof THREE.CompressedTexture ) {
 
-			for ( var i = 0, il = mipmaps.length; i < il; i ++ ) {
+			var isCompressed = ( texture.format !== THREE.RGBAFormat );
 
-				mipmap = mipmaps[ i ];
-				if ( texture.format !== THREE.RGBAFormat ) {
-					if ( _compressedTextureFormats.indexOf( glFormat ) > -1 ) {
+			if( isCompressed && _compressedTextureFormats.indexOf( glFormat ) === -1 ) {
+				// We can't upload texture
+				// fallback with 1x1 black texture
+				console.warn( "Attempt to load unsupported compressed texture format" );
+				_gl.texImage2D( _gl.TEXTURE_2D, 0, _gl.RGBA, 1, 1, 0, _gl.RGBA, _gl.UNSIGNED_BYTE, new Uint8Array( [0xFF, 0, 0, 0xFF ] ) );
+				
+			} else {
+
+
+				for ( var i = 0, il = mipmaps.length; i < il; i ++ ) {
+
+					mipmap = mipmaps[ i ];
+					if ( isCompressed ) {
 						_gl.compressedTexImage2D( _gl.TEXTURE_2D, i, glFormat, mipmap.width, mipmap.height, 0, mipmap.data );
 					} else {
-						console.warn( "Attempt to load unsupported compressed texture format" );
+						_gl.texImage2D( _gl.TEXTURE_2D, i, glFormat, mipmap.width, mipmap.height, 0, glFormat, glType, mipmap.data );
 					}
-				} else {
-					_gl.texImage2D( _gl.TEXTURE_2D, i, glFormat, mipmap.width, mipmap.height, 0, glFormat, glType, mipmap.data );
-				}
 
+				}
 			}
 
 		} else { // regular Texture (image, video, canvas)
@@ -5739,20 +5747,34 @@ THREE.WebGLRenderer = function ( parameters ) {
 					} else {
 
 						var mipmap, mipmaps = cubeImage[ i ].mipmaps;
+						var j, jl;
 
-						for ( var j = 0, jl = mipmaps.length; j < jl; j ++ ) {
+						if ( texture.format !== THREE.RGBAFormat ) {
 
-							mipmap = mipmaps[ j ];
-							if ( texture.format !== THREE.RGBAFormat ) {
+							if( _compressedTextureFormats.indexOf( glFormat ) === -1 ) {
+								
+								console.warn( "Attempt to load unsupported compressed texture format" );
+								_gl.texImage2D( _gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, _gl.RGBA, 1, 1, 0, _gl.RGBA, _gl.UNSIGNED_BYTE, new Uint8Array( [0xFF, 0, 0, 0xFF ] ) );
 
-								if ( _compressedTextureFormats.indexOf( glFormat ) > -1 ) {
+							} else { 
+
+								for ( j = 0, jl = mipmaps.length; j < jl; j ++ ) {
+
+									mipmap = mipmaps[ j ];
+
 									_gl.compressedTexImage2D( _gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, j, glFormat, mipmap.width, mipmap.height, 0, mipmap.data );
-								} else {
-									console.warn( "Attempt to load unsupported compressed texture format" );
-								}
 
-							} else {
+								}
+							}
+
+						} else {
+
+							for ( j = 0, jl = mipmaps.length; j < jl; j ++ ) {
+
+								mipmap = mipmaps[ j ];
+
 								_gl.texImage2D( _gl.TEXTURE_CUBE_MAP_POSITIVE_X + i, j, glFormat, mipmap.width, mipmap.height, 0, glFormat, glType, mipmap.data );
+
 							}
 
 						}
