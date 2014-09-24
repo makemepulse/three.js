@@ -192,6 +192,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 	var _glExtensionCompressedTexturePVRTC;
 	var _glExtensionElementIndexUint;
 	var _glExtensionFragDepth;
+	var _glExtensionBlendMinMax;
 
 
 	initGL();
@@ -297,6 +298,12 @@ THREE.WebGLRenderer = function ( parameters ) {
 	this.supportsCompressedTexturePVRTC = function () {
 
 		return _glExtensionCompressedTexturePVRTC;
+
+	};
+
+	this.supportsBlendMinMax = function () {
+
+		return _glExtensionBlendMinMax;
 
 	};
 
@@ -5594,7 +5601,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		} else if ( texture instanceof THREE.CompressedTexture ) {
 
-			var isCompressed = ( texture.format !== THREE.RGBAFormat );
+			var isCompressed = ( texture.format !== THREE.RGBAFormat && texture.format !== THREE.RGBFormat );
 
 			if( isCompressed && _compressedTextureFormats.indexOf( glFormat ) === -1 ) {
 				// We can't upload texture
@@ -5608,10 +5615,15 @@ THREE.WebGLRenderer = function ( parameters ) {
 				for ( var i = 0, il = mipmaps.length; i < il; i ++ ) {
 
 					mipmap = mipmaps[ i ];
+
 					if ( isCompressed ) {
+
 						_gl.compressedTexImage2D( _gl.TEXTURE_2D, i, glFormat, mipmap.width, mipmap.height, 0, mipmap.data );
+
 					} else {
+
 						_gl.texImage2D( _gl.TEXTURE_2D, i, glFormat, mipmap.width, mipmap.height, 0, glFormat, glType, mipmap.data );
+
 					}
 
 				}
@@ -5749,7 +5761,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 						var mipmap, mipmaps = cubeImage[ i ].mipmaps;
 						var j, jl;
 
-						if ( texture.format !== THREE.RGBAFormat ) {
+						if ( texture.format !== THREE.RGBAFormat && texture.format !== THREE.RGBFormat ) {
 
 							if( _compressedTextureFormats.indexOf( glFormat ) === -1 ) {
 								
@@ -5778,7 +5790,9 @@ THREE.WebGLRenderer = function ( parameters ) {
 							}
 
 						}
+
 					}
+
 				}
 
 				if ( texture.generateMipmaps && isImagePowerOfTwo ) {
@@ -6096,6 +6110,13 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		}
 
+		if ( _glExtensionBlendMinMax !== undefined ) {
+
+			if ( p === THREE.MinEquation ) return _glExtensionBlendMinMax.MIN_EXT;
+			if ( p === THREE.MaxEquation ) return _glExtensionBlendMinMax.MAX_EXT;
+
+		}
+
 		return 0;
 
 	};
@@ -6224,6 +6245,8 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		_glExtensionElementIndexUint = _gl.getExtension( 'OES_element_index_uint' );
 
+		_glExtensionBlendMinMax = _gl.getExtension( 'EXT_blend_minmax' );
+
 
 		if ( _glExtensionTextureFloat === null ) {
 
@@ -6258,6 +6281,12 @@ THREE.WebGLRenderer = function ( parameters ) {
 		if ( _glExtensionElementIndexUint === null ) {
 
 			console.log( 'THREE.WebGLRenderer: elementindex as unsigned integer not supported.' );
+
+		}
+
+		if ( _glExtensionBlendMinMax === null ) {
+
+			console.log( 'THREE.WebGLRenderer: min max blend equations not supported.' );
 
 		}
 
