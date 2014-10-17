@@ -1,3 +1,7 @@
+/**
+ * @author mrdoob / http://mrdoob.com/
+ */
+
 var Editor = function () {
 
 	var SIGNALS = signals;
@@ -17,6 +21,9 @@ var Editor = function () {
 		showDialog: new SIGNALS.Signal(),
 
 		// notifications
+
+		savingStarted: new SIGNALS.Signal(),
+		savingFinished: new SIGNALS.Signal(),
 
 		themeChanged: new SIGNALS.Signal(),
 
