@@ -8318,6 +8318,8 @@ THREE.BufferGeometry = function () {
 	this.boundingBox = null;
 	this.boundingSphere = null;
 
+  this.interleaved = false;
+
 };
 
 THREE.BufferGeometry.prototype = {
@@ -20119,34 +20121,54 @@ THREE.WebGLRenderer = function ( parameters ) {
 	};
 
 	function setDirectBuffers( geometry ) {
+    if( geometry.interleaved ) {
+      var i, j;
+      for (i = 0, j = geometry.buffers.length; i < j; i++) {
+        var buf = geometry.buffers[i];
 
-		var attributes = geometry.attributes;
-		var attributesKeys = geometry.attributesKeys;
+        if ( buf.___glBuffer === undefined ) {
 
-		for ( var i = 0, l = attributesKeys.length; i < l; i ++ ) {
+          buf.___glBuffer = _gl.createBuffer();
 
-			var key = attributesKeys[ i ];
-			var attribute = attributes[ key ];
+          var type = buf.isIndex ? _gl.ELEMENT_ARRAY_BUFFER : _gl.ARRAY_BUFFER;
 
-			if ( attribute.buffer === undefined ) {
 
-				attribute.buffer = _gl.createBuffer();
-				attribute.needsUpdate = true;
+          _gl.bindBuffer( type, buf.___glBuffer );
+          _gl.bufferData( type, buf.data, _gl.STATIC_DRAW );
+        }
 
-			}
+      }
+    } else {
 
-			if ( attribute.needsUpdate === true ) {
+      var attributes = geometry.attributes;
+      var attributesKeys = geometry.attributesKeys;
 
-				var bufferType = ( key === 'index' ) ? _gl.ELEMENT_ARRAY_BUFFER : _gl.ARRAY_BUFFER;
+      for ( var i = 0, l = attributesKeys.length; i < l; i ++ ) {
 
-				_gl.bindBuffer( bufferType, attribute.buffer );
-				_gl.bufferData( bufferType, attribute.array, _gl.STATIC_DRAW );
+        var key = attributesKeys[ i ];
+        var attribute = attributes[ key ];
 
-				attribute.needsUpdate = false;
+        if ( attribute.buffer === undefined ) {
 
-			}
+          attribute.buffer = _gl.createBuffer();
+          attribute.needsUpdate = true;
 
-		}
+        }
+
+        if ( attribute.needsUpdate === true ) {
+
+          var bufferType = ( key === 'index' ) ? _gl.ELEMENT_ARRAY_BUFFER : _gl.ARRAY_BUFFER;
+
+          _gl.bindBuffer( bufferType, attribute.buffer );
+          _gl.bufferData( bufferType, attribute.array, _gl.STATIC_DRAW );
+
+          attribute.needsUpdate = false;
+
+        }
+
+      }
+    }
+
 
 	}
 
@@ -20267,13 +20289,26 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 				if ( geometryAttribute !== undefined ) {
 
-					var size = geometryAttribute.itemSize;
+          if( geometry.interleaved === true ) {
 
-					_gl.bindBuffer( _gl.ARRAY_BUFFER, geometryAttribute.buffer );
 
-					enableAttribute( programAttribute );
+            var buf = geometryAttribute.buffer;
+					  var size = geometryAttribute.infos.len;
 
-					_gl.vertexAttribPointer( programAttribute, size, _gl.FLOAT, false, 0, startIndex * size * 4 ); // 4 bytes per Float32
+            _gl.bindBuffer( _gl.ARRAY_BUFFER, buf.___glBuffer );
+            enableAttribute( programAttribute );
+            _gl.vertexAttribPointer( programAttribute, size, _gl.FLOAT, false, buf.strideBytes, startIndex * buf.strideBytes + geometryAttribute.infos.offsetBytes ); // 4 bytes per Float32
+
+          } else {
+
+					  var size = geometryAttribute.itemSize;
+            _gl.bindBuffer( _gl.ARRAY_BUFFER, geometryAttribute.buffer );
+            enableAttribute( programAttribute );
+            _gl.vertexAttribPointer( programAttribute, size, _gl.FLOAT, false, 0, startIndex * size * 4 ); // 4 bytes per Float32
+          }
+
+
+
 
 				} else if ( material.defaultAttributeValues !== undefined ) {
 
@@ -20353,7 +20388,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 					if ( updateBuffers ) {
 
 						setupVertexAttributes( material, program, geometry, 0 );
-						_gl.bindBuffer( _gl.ELEMENT_ARRAY_BUFFER, index.buffer );
+						_gl.bindBuffer( _gl.ELEMENT_ARRAY_BUFFER, geometry.interleaved ? index.buffer.___glBuffer: index.buffer );
 
 					}
 
@@ -20378,7 +20413,7 @@ THREE.WebGLRenderer = function ( parameters ) {
 						if ( updateBuffers ) {
 
 							setupVertexAttributes( material, program, geometry, startIndex );
-							_gl.bindBuffer( _gl.ELEMENT_ARRAY_BUFFER, index.buffer );
+              _gl.bindBuffer( _gl.ELEMENT_ARRAY_BUFFER, geometry.interleaved ? index.buffer.___glBuffer: index.buffer );
 
 						}
 

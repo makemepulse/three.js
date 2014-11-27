@@ -21,6 +21,8 @@ THREE.BufferGeometry = function () {
 	this.boundingBox = null;
 	this.boundingSphere = null;
 
+  this.interleaved = false;
+
 };
 
 THREE.BufferGeometry.prototype = {
