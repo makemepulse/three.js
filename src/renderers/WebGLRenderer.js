@@ -745,19 +745,32 @@ THREE.WebGLRenderer = function ( parameters ) {
 
 		if ( geometry instanceof THREE.BufferGeometry ) {
 
-			for ( var name in geometry.attributes ) {
-			
-				var attribute = geometry.attributes[ name ];
+      if( geometry.interleaved ) {
+        for (var i = 0, l = geometry.buffers.length; i < l; i++) {
+          if( geometry.buffers[i].___glBuffer !== undefined ) {
 
-				if ( attribute.buffer !== undefined ) {
+            _gl.deleteBuffer( geometry.buffers[i].___glBuffer );
 
-					_gl.deleteBuffer( attribute.buffer );
+          }
 
-					delete attribute.buffer;
+        }
+      } else {
 
-				}
+        for ( var name in geometry.attributes ) {
 
-			}
+          var attribute = geometry.attributes[ name ];
+
+          if ( attribute.buffer !== undefined ) {
+
+            _gl.deleteBuffer( attribute.buffer );
+
+            delete attribute.buffer;
+
+          }
+
+        }
+      }
+
 
 			_this.info.memory.geometries --;
 
