@@ -1,12 +1,12 @@
-/*    
- *	 PVRLoader
- *   Author: pierre lepers
- *   Date: 17/09/2014 11:09
- *
- *	 PVR v2 (legacy) parser
- *   TODO : Add Support for PVR v3 format
- *   TODO : implement loadMipmaps option
- */
+//
+//	 PVRLoader
+//  Author: pierre lepers
+//  Date: 17/09/2014 11:09
+//
+//	 PVR v2 (legacy) parser
+//  TODO : Add Support for PVR v3 format
+//  TODO : implement loadMipmaps option
+//
 
 
 THREE.PVRLoader = function () {
@@ -115,7 +115,7 @@ THREE.PVRLoader._parseV2 = function ( pvrDatas ) {
 
 
 
-	var bpp, format;
+	var format;
 	var _hasAlpha = bitmaskAlpha > 0;
 
 	if (formatFlags === PVRTC_4 ) {
